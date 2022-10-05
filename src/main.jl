@@ -1,3 +1,14 @@
+#=
+EXISTING ISSUES
+
+- set_e() function can be prettier
+- solve powermod() integer division errors
+- How to do B^Range[StringLength[message]]-1 in Julia
+- Encrypt/decrypt
+
+=#
+
+
 using Primes
 
 #FUNCTIONS
@@ -50,6 +61,8 @@ LoadError: DivideError: integer division error =#
 
 #println("d = ", d)
 
+
+#Just for testing that ascii encoding is right
 message = "discrete math"
 
 #=
@@ -59,13 +72,14 @@ for c in message
     print(c)
 end=#
 
+
 cryptolist = []
 
 for c in message
     push!(cryptolist, Int(c))
 end
 
-println(cryptolist)
+println(cryptolist) #[100, 105, 115, 99, 114, 101, 116, 101, 32, 109, 97, 116, 104]
      
 B = 256
 
