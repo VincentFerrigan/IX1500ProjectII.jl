@@ -3,13 +3,13 @@ EXISTING ISSUES
 
 - set_e() function can be prettier
 - solve powermod() integer division errors
-- How to do B^Range[StringLength[message]]-1 in Julia
 - Encrypt/decrypt
 
 =#
 
 
 using Primes
+using LinearAlgebra
 
 #FUNCTIONS
 
@@ -37,27 +37,30 @@ println("p = ",p)
 println("q = ",q)
 
 # Set n
-n = big(p)*big(q)
+n = BigInt(p)*BigInt(q)
 
-println("n = ",big(n))
+println("n = ",BigInt(n))
 
 # Set ϕ
-ϕ = big(p-1)*big(q-1)
+ϕ = BigInt(p-1)*BigInt(q-1)
 
-println("ϕ = ",big(ϕ))
+println("ϕ = ",BigInt(ϕ))
 
 # Set range for e
 e_range_low = 100
 e_range_hi = 1000
 
 # Set e
-e = set_e(ϕ)
+e = BigInt(set_e(ϕ))
+
 
 println("e = ", e)
 
 #= Set d
-LoadError: DivideError: integer division error =#
-#d = powermod(e, -1, big(ϕ)) 
+Half the time: LoadError: DivideError: integer division error 
+WHY?=#
+d = BigInt(powermod(e, -1, BigInt(ϕ))) 
+
 
 #println("d = ", d)
 
@@ -82,4 +85,30 @@ end
 println(cryptolist) #[100, 105, 115, 99, 114, 101, 116, 101, 32, 109, 97, 116, 104]
      
 B = 256
+
+r = Vector{BigInt}(1:length(message))
+
+for i in 1:length(message)
+    r[i] = BigInt(B)^(r[i]-1)
+    
+end
+
+println(r)
+
+code = BigInt(0)
+
+code += dot(cryptolist, r)
+
+println(code)
+
+crypted = powermod(code, e, n)
+
+println(crypted)
+
+decrypted = powermod(crypted, d, n)
+
+println(decrypted)
+
+println(mod(decrypted, 256))
+println(mod(decrypted, 256))
 
