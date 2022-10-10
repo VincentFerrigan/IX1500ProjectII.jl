@@ -20,6 +20,7 @@ begin
 	using PlutoUI
 	using Primes
 	using LinearAlgebra
+	using AbstractAlgebra
 end
 
 # ╔═╡ e4efab6e-472b-11ed-3bf9-eda6e9d673f1
@@ -28,7 +29,7 @@ md"
 # _Encryption and decryption_
     Course code: KTH/ICT:IX1500 - Discrete Mathematics, ht22 
     Date: 2022-10-08
-    Version: 0.1
+    Version: 0.3
     Vincent Ferrigan, ferrigan@kth.se
     Martin Mellqvist Ekberg, martme@kth.se
 "
@@ -50,6 +51,86 @@ md"
 #### Result
 "
 
+# ╔═╡ fa672ba9-0b7d-432f-9523-e0c5d8fa0971
+md"""
+In order to create a full encryption key employing *RSA* we use the standard methods. But since we want to create something that is crackable we use smaller numbers than normal.
+
+To generate $p$ and $q$ we generate two random numbers in the range ($10^{15}$ - $10^{20}$) and the use Julia's *nextprime()* fucntion to generate a closeby prime.
+
+$n=p \cdot q$
+$ϕ = (p-1) \cdot (q-1)$
+
+We generate a random number $e$ in the range ($10^3$ - $10^4$).
+
+We then calculate our decryption key $d$ by taking the modular inverse of $e$ mod $ϕ$.
+
+Now we can publish our public keys $e$ and $n$ and we keep the rest secret.
+
+We encrypt a message by taking a string of text and converting the characters to their integer ascii counterparts and store this in a vector.
+
+We can then take the scalar product of this vector and a vector consisting of powers of 256 (0, the length of the vector).
+
+This generates a large number that we can then encrypt by taking the message $m$ and
+
+$m^e \ mod(n)$
+
+We decrypt the created message $c$ by taking:
+
+$c^d \ mod(n)$
+
+We finally can extract the characters by taking the remainder after division by 256 repeatedly.
+
+As an example we use the following values:
+
+	p = 6997538501205631649
+	q = 5904508917194892811
+	n = 41317028478783237270718606574104175339
+	ϕ = 41317028478783237257816559155703650880
+	e = 23593
+	d = 33714891377677060301253948072123370777
+
+Message: *\"Mathematical science shows what is. It is the language of unseen relations between things.\"* - Ada Lovelace
+
+Which is encrypted to:
+
+	14017977394216937714656534468291301637
+
+##### Cracking the code
+
+Cracking a properly full-length RSA key is unfeasible with classical computers but with smaller keys, we can make some attempts at least.
+
+The most simplistic way would be some sort of brute force attack where we simply check every single possible number, but this would be extraordinarily inefficient.
+
+##### Fermat factorization
+
+According to Fermats factorization method, we can write an odd integer (as all primes are) $N$ as:
+
+$N=a^2+b^2=(a+b)(a-b)$
+
+We can therefore use this to calculate $p$ and $q$ by
+
+$p = (a+b)$
+$q = (a-b)$
+
+Since
+
+$a \land b \ngtr \sqrt N$
+
+We can assume that no value will be higher than $\sqrt n$. 
+
+If the two primes are reasonably close we can use this to find $a$ and $b$.
+
+The above formula can be rewritten as:
+
+$b^2 = a^2 - N$
+
+Repeatedly calculating this and checking if it's a square will eventually yield the right result.
+
+Having calculated this we use the above identities for $p$ and $q$ as sums or differences of $a$ and $b$.
+
+From there we simply use the standard steps for calculating $ϕ$ and $d$ and then we can decrypt.
+"""
+
 # ╔═╡ e3a3f577-6bdf-489a-9c7c-36ef655c25a0
 md"""
 ##### Encrypting a message
@@ -65,7 +146,7 @@ md"""
 
 ###### Enter the message you want to encrypt
 
-$(@bind input_x TextField((55,10)))
+$(@bind input_x TextField((64,10)))
 """
 
 # ╔═╡ 94d0e0b8-1181-4d44-a1e6-18169a0d4e4a
@@ -84,7 +165,7 @@ md"""
 
 ###### Enter the message you want to decrypt
 
-$(@bind input_y TextField((55,10)))
+$(@bind input_y TextField((64,10)))
 """
 
 # ╔═╡ 3acbb96e-7c57-413c-8737-d2c65aadbef3
@@ -92,6 +173,11 @@ md"""
 $(@bind decipher html"<input type=button value='Generate decrypted message'>")
 """
 #This encrypted message must be less than n
+
+# ╔═╡ 249bb53f-adb3-4069-9911-76ef4b2c8c81
+md"""
+### The Five Steps
+"""
 
 # ╔═╡ 62289d80-e74e-4586-942f-d910b15c9d07
 md"""
@@ -118,6 +204,32 @@ md"""
 ##### Step 5: Compute d
 """
 
+# ╔═╡ 551cec3c-83dd-4f3f-9d86-142cca8c6de5
+md"""
+#### Crack
+"""
+
+# ╔═╡ 10a37457-faf1-418f-921b-7e2b5a9e33b3
+md"""
+###### Enter your nemesis's public key($n$, $e$)
+
+`n = `$(@bind input_crack_n html"<input type=text size=50 >")
+
+`e = `$(@bind input_crack_e html"<input type=text size=50 >")
+
+`tries = `$(@bind input_crack_tries html"<input type=text size=46 >")
+
+###### Enter the message you want to crack
+
+$(@bind input_z TextField((64,10)))
+"""
+
+# ╔═╡ 2daade8d-dbd3-471f-95a8-3474d5d2547b
+md"""
+$(@bind crack html"<input type=button value='Generate private key d and the decrypted message'>")
+"""
+#This encrypted message must be less than n
+
 # ╔═╡ cba96317-b014-4ea1-b98b-33c08ed2da09
 md"
 ##### Conclusions
@@ -128,18 +240,17 @@ md"
 ### Code
 "
 
-# ╔═╡ dbffd5d1-cf9b-4400-bb4d-0fe21146f3b2
-
-
 # ╔═╡ 72a51084-e43f-4eeb-96ad-a95fdf9beb51
-md"## Pluto-Notebook
-### Packages
+md"""
+#### Pluto-Notebook
+##### Packages
 * IteractiveUtils?
 * PlutoUI
 * Random
 * Primes
 * LinearAlgebra
-"
+* AbstractAlgebra
+"""
 
 # ╔═╡ e0c3b4fa-2481-4a5b-9e62-aaa121718f2c
 md"#### Task A
@@ -189,7 +300,7 @@ end
 """
     set_d(e, ϕ)
 
-Returns private key d, s.t. de ≣ 1 mod (ϕ)
+Returns private key d, s.t. de ≡ 1 mod (ϕ)
 
 ### Comments and open issues
 * Alternative to set_d = (e, ϕ) -> BigInt(powermod(e, -1, BigInt(ϕ)))
@@ -217,7 +328,8 @@ Returns two distinct random primes, p and q within given range
 """
 function set_random_primes_p_q(range_low, range_high)
     p = BigInt(nextprime(rand(range_low:range_high)))
-    q = BigInt(nextprime(rand(range_low:range_high)))
+    #q = BigInt(nextprime(p, 2))
+	q = BigInt(nextprime(rand(range_low:range_high)))
     
     (p != q ? (p, q) : set_random_primes_p_q(range_low, range_high)
     )
@@ -234,15 +346,24 @@ n = set_n(p, q)
 
 # ╔═╡ 77b72a7e-938c-4b9a-a535-ff9e58f2a92c
 begin
-setof_e = set_e(ϕ, 100000)
+setof_e = set_e(ϕ, 10000)
 e = pop!(setof_e)
 end
 
-# ╔═╡ 468e1ba4-d783-4ebf-80ba-16fb42fec055
-println("n: ", n, " e: ", e)
-
 # ╔═╡ 6f43f1f6-f6fc-4945-bd7d-f7a6c0c09e52
 d = set_d(e, ϕ)
+
+# ╔═╡ 468e1ba4-d783-4ebf-80ba-16fb42fec055
+md"""
+Please note that your 
+* n is $n 
+* e is $e
+
+* d is $d
+* p is $p
+* ϕ is $ϕ
+* q is $q
+"""
 
 # ╔═╡ a623010a-b0e2-4b3f-910e-602826317a70
 md"""
@@ -258,24 +379,30 @@ Please note that your
     encrypt(x, e, n)
 
 Returns powermod(x, e, n) that is mod(x^e, n)
-Which computes ``x^e mod (n)``
+Which computes ``x^e\\mod (n)``
 """
 encrypt = (x, e, n) -> powermod(BigInt(x), BigInt(e), BigInt(n))
+
+# ╔═╡ f2ec0a3a-e43c-4780-ae07-ef5a3d5b8eb8
+encrypt2 = (x, e, n) -> modulo_power(x, e, n) 
 
 # ╔═╡ e8301b1c-c95b-4a04-aede-4efff289b180
 """
     decrypt(y, d, n)
 
 Returns powermod(y, d, n) that is mod(y^d, n)
-Which computes ``y^d mod (n)`` where ``d == e^(-1)``
+Which computes ``y^d \\mod n``, where ``d = e^{-1}``
 """
 decrypt = (y, d, n) -> powermod(BigInt(y), BigInt(d), BigInt(n))
+
+# ╔═╡ 7265b37b-ff31-498e-8a7c-5455d5cac2e1
+decrypt2 = (y, d, n) -> modulo_power(y, d, n)
 
 # ╔═╡ e3ae1141-e767-4071-88bb-3d4b687fa11c
 """
 	to_num(message)
 
-Returns a vector
+Returns a vector of 
 """
 function to_num(message)
     vector = []
@@ -347,6 +474,11 @@ $e_message
 end
 
 # ╔═╡ 081364db-1854-49f6-b4fe-3ddf027a318a
+"""
+	mbr2base(n, base)
+
+Returns a string
+"""
 function nbr2base(n, base)
 	res_str = ""
 	while n != zero(n)
@@ -377,7 +509,6 @@ function decription(input_n, input_d, input_y)
 end
 
 # ╔═╡ 77844cde-c285-4c1a-82d3-79b180fe16d5
-#testar bara input
 let
 		decipher
 		
@@ -389,36 +520,91 @@ $d_message
 """
 end
 
-# ╔═╡ daba5c9e-587b-4c8e-b30a-d2b0e44756f7
-square(x) = x * x
-
 # ╔═╡ 0768dc6e-1bf0-488a-8757-82e0b109aca4
-function modulo_power(base::T, exp::T, n::T) where {T}
-  if exp == zero(T)
-    one(T)
-  else
-    if isodd(exp)
-      mod(base * modulo_power(base, exp - one(T), n), n)
-    else
-      mod(square(modulo_power(base, fld(exp, oftype(exp, 2)), n)), n)
-    end
-  end
+"""
+
+	hanno(n, e, tries)
+
+Returns p, q, d
+
+Hanno Böcks "Fermat Attack on RSA"
+
+``n = a^2 - b^2 = (a+b)(a-b)``
+
+``b^2 = a^2 -n``
+
+``a = \\lceil \\sqrt{n} \\rceil``
+"""
+function hanno(n, e, tries = 1000000)
+	a = ceil(BigInt(isqrt(n)))
+	b = BigInt(0)
+	i = 0
+	while i < tries
+		b2 = a^2 - n
+		
+		if is_square(b2)
+			b = sqrt(b2)
+			break
+		end
+		a += 1
+		i += 1
+	end
+	
+	p = a + b
+	q = a - b
+
+	ϕ = set_ϕ(p, q)
+	d = set_d(e, ϕ)
+	return p, q, d
 end
 
-# ╔═╡ f2ec0a3a-e43c-4780-ae07-ef5a3d5b8eb8
-encrypt2 = (x, e, n) -> modulo_power(x, e, n) 
+# ╔═╡ dc46d70a-f2bd-4618-8fef-617e32943438
+"""
+	cracking(input_n, input_e, input_z, input_t)
 
-# ╔═╡ 7265b37b-ff31-498e-8a7c-5455d5cac2e1
-decrypt2 = (y, d, n) -> modulo_power(y, d, n)
+### Arguments
+* `input_n`: public key n
+* `input_e`: public key e
+* `input_z`: encrypted message to be decrypted
+* `input_t`: Number of tries (iterations)
+"""
+function cracking(input_n, input_e, input_z, input_t)
+	n = tryparse(BigInt, "$input_n")
+	e = tryparse(BigInt, "$input_e")
+	z = tryparse(BigInt, "$input_z")
+	t = tryparse(BigInt, "$input_t")
+	typeof(n) == Nothing && return "$input_n ain't a number"
+	typeof(e) == Nothing && return "$input_e ain't a number"
+	typeof(z) == Nothing && return "$input_z ain't a number"
+	p, q, d = hanno(n, e, t)
+
+	return p, q, d, nbr2base(decrypt(z, d, n), 256)
+end
+
+# ╔═╡ a3af17d8-c88e-468b-a0b4-7f4963ba0f62
+let
+		crack
+		
+		p, q, d, z_msg = cracking(input_crack_n, input_crack_e, input_z, input_crack_tries)
+		md"""
+Could it be that
+* d: $d
+* p: $p
+* q: $q
+* Message: $z_msg
+"""
+end
 
 # ╔═╡ 00000000-0000-0000-0000-000000000001
 PLUTO_PROJECT_TOML_CONTENTS = """
 [deps]
+AbstractAlgebra = "c3fe647b-3220-5bb0-a1ea-a7954cac585d"
 LinearAlgebra = "37e2e46d-f89d-539d-b4ee-838fcccc9c8e"
 PlutoUI = "7f904dfe-b85e-4ff6-b463-dae2292396a8"
 Primes = "27ebfcd6-29c5-5fa9-bf4b-fb8fc14df3ae"
 
 [compat]
+AbstractAlgebra = "~0.27.5"
 PlutoUI = "~0.7.43"
 Primes = "~0.5.3"
 """
@@ -429,7 +615,13 @@ PLUTO_MANIFEST_TOML_CONTENTS = """
 
 julia_version = "1.8.0"
 manifest_format = "2.0"
-project_hash = "77557fa042449fe94e0b599d239bb6fab76c9839"
+project_hash = "564c12eaf6a4e9685be392909038899cd523bbc6"
+
+[[deps.AbstractAlgebra]]
+deps = ["GroupsCore", "InteractiveUtils", "LinearAlgebra", "MacroTools", "Markdown", "Random", "RandomExtensions", "SparseArrays", "Test"]
+git-tree-sha1 = "e506dcc52d993ec7c69ea754b3bbd507d4737891"
+uuid = "c3fe647b-3220-5bb0-a1ea-a7954cac585d"
+version = "0.27.5"
 
 [[deps.AbstractPlutoDingetjes]]
 deps = ["Pkg"]
@@ -475,6 +667,12 @@ deps = ["Statistics"]
 git-tree-sha1 = "335bfdceacc84c5cdf16aadc768aa5ddfc5383cc"
 uuid = "53c48c17-4a7d-5ca2-90c5-79b7896eea93"
 version = "0.8.4"
+
+[[deps.GroupsCore]]
+deps = ["Markdown", "Random"]
+git-tree-sha1 = "9e1a5e9f3b81ad6a5c613d181664a0efc6fe6dd7"
+uuid = "d5909c97-4eac-4ecc-a3dc-fdd0858a4120"
+version = "0.4.0"
 
 [[deps.Hyperscript]]
 deps = ["Test"]
@@ -538,6 +736,12 @@ uuid = "37e2e46d-f89d-539d-b4ee-838fcccc9c8e"
 [[deps.Logging]]
 uuid = "56ddb016-857b-54e1-b83d-db4d58db5568"
 
+[[deps.MacroTools]]
+deps = ["Markdown", "Random"]
+git-tree-sha1 = "42324d08725e200c23d4dfb549e0d5d89dede2d2"
+uuid = "1914dd2f-81c6-5fcd-8719-6d5c9610ff09"
+version = "0.5.10"
+
 [[deps.Markdown]]
 deps = ["Base64"]
 uuid = "d6f4376e-aef5-505a-96c1-9c027394607a"
@@ -597,6 +801,12 @@ uuid = "3fa0cd96-eef1-5676-8a61-b3b8758bbffb"
 [[deps.Random]]
 deps = ["SHA", "Serialization"]
 uuid = "9a3f8284-a2c9-5f02-9a11-845980a1fd5c"
+
+[[deps.RandomExtensions]]
+deps = ["Random", "SparseArrays"]
+git-tree-sha1 = "062986376ce6d394b23d5d90f01d81426113a3c9"
+uuid = "fb686558-2515-59ef-acaa-46db3789a887"
+version = "0.4.3"
 
 [[deps.Reexport]]
 git-tree-sha1 = "45e428421666073eab6f2da5c9d310d99bb12f9b"
@@ -673,17 +883,19 @@ version = "17.4.0+0"
 # ╟─4b149a25-301f-4e92-9f8c-bebe7609b028
 # ╟─499c3100-edbd-4510-b6f6-13694529e9f1
 # ╟─70ee665c-1c94-4a04-884b-cbad0389e814
+# ╟─fa672ba9-0b7d-432f-9523-e0c5d8fa0971
 # ╟─e3a3f577-6bdf-489a-9c7c-36ef655c25a0
-# ╠═468e1ba4-d783-4ebf-80ba-16fb42fec055
+# ╟─468e1ba4-d783-4ebf-80ba-16fb42fec055
 # ╟─b1a72120-c2ac-4372-a585-2ae7ad112440
-# ╠═94d0e0b8-1181-4d44-a1e6-18169a0d4e4a
-# ╠═5edcfcf7-c3ea-4d1a-b980-3b12e879407a
-# ╠═5616a159-dc0a-466c-9b91-cd98420a3e02
+# ╟─94d0e0b8-1181-4d44-a1e6-18169a0d4e4a
+# ╟─5edcfcf7-c3ea-4d1a-b980-3b12e879407a
+# ╟─5616a159-dc0a-466c-9b91-cd98420a3e02
 # ╟─a623010a-b0e2-4b3f-910e-602826317a70
 # ╟─2f917c1c-fa83-4c67-92a2-2b006d919d8a
 # ╟─3acbb96e-7c57-413c-8737-d2c65aadbef3
-# ╠═77844cde-c285-4c1a-82d3-79b180fe16d5
+# ╟─77844cde-c285-4c1a-82d3-79b180fe16d5
 # ╟─706d2a7f-ce3b-465d-a809-fd4be181d871
+# ╟─249bb53f-adb3-4069-9911-76ef4b2c8c81
 # ╟─62289d80-e74e-4586-942f-d910b15c9d07
 # ╠═12e01839-c852-4c90-922d-b841be4e4cd2
 # ╟─fc74f886-39c3-4f96-be08-0797a06cc277
@@ -694,11 +906,15 @@ version = "17.4.0+0"
 # ╠═77b72a7e-938c-4b9a-a535-ff9e58f2a92c
 # ╟─e8dbe061-8e49-4b87-adc0-ad6151aad34d
 # ╠═6f43f1f6-f6fc-4945-bd7d-f7a6c0c09e52
+# ╟─551cec3c-83dd-4f3f-9d86-142cca8c6de5
+# ╟─10a37457-faf1-418f-921b-7e2b5a9e33b3
+# ╟─2daade8d-dbd3-471f-95a8-3474d5d2547b
+# ╟─a3af17d8-c88e-468b-a0b4-7f4963ba0f62
+# ╟─dc46d70a-f2bd-4618-8fef-617e32943438
 # ╟─cba96317-b014-4ea1-b98b-33c08ed2da09
 # ╟─3992d19b-634e-494c-a3d2-6cf118605c08
-# ╠═dbffd5d1-cf9b-4400-bb4d-0fe21146f3b2
 # ╟─72a51084-e43f-4eeb-96ad-a95fdf9beb51
-# ╠═f1900262-9b44-4c62-9fc9-aaff868bb910
+# ╟─f1900262-9b44-4c62-9fc9-aaff868bb910
 # ╟─e0c3b4fa-2481-4a5b-9e62-aaa121718f2c
 # ╠═9dffd0c9-f78d-438d-84f2-3f15902f40d1
 # ╠═7376b099-d71d-4fa3-a896-83cb6ff83193
@@ -715,6 +931,5 @@ version = "17.4.0+0"
 # ╠═b38d6f6b-aafc-4fbe-988b-5af30a056424
 # ╠═081364db-1854-49f6-b4fe-3ddf027a318a
 # ╠═0768dc6e-1bf0-488a-8757-82e0b109aca4
-# ╠═daba5c9e-587b-4c8e-b30a-d2b0e44756f7
 # ╟─00000000-0000-0000-0000-000000000001
 # ╟─00000000-0000-0000-0000-000000000002

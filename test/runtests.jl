@@ -39,9 +39,10 @@ end
     @test mod(*(d,e), ϕ) == 1               # de ≣ 1 mod (ϕ)
     @test mod(*(d2,e), ϕ) == 1               # de ≣ 1 mod (ϕ)
     
-    message = 10
+    message = 1000000000000000
     e_message = encrypt(message, e, n)
     d_message = decrypt(e_message, d, n)
+    println(message)
 
     @test d_message == message
 end
