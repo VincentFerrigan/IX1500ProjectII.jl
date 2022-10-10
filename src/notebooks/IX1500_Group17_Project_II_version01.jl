@@ -65,37 +65,14 @@ md"""
 
 ###### Enter the message you want to encrypt
 
-$(@bind input_a TextField((55,10)))
+$(@bind input_x TextField((55,10)))
 """
 
 # ╔═╡ 94d0e0b8-1181-4d44-a1e6-18169a0d4e4a
 md"""
-$(@bind cipher html"<input type=button value='Generate text as cipher code'>")
+$(@bind encipher html"<input type=button value='Generate text as encipher code'>")
 """
 #This encrypted message must be less than n
-
-# ╔═╡ 5616a159-dc0a-466c-9b91-cd98420a3e02
-# Testar bara input
-function compute(input_n)
-	n = tryparse(Int, "$input_n")
-	if typeof(n) != Nothing
-		return n
-	else
-		return "That aint a number"
-	end
-end
-
-# ╔═╡ 5edcfcf7-c3ea-4d1a-b980-3b12e879407a
-#testar bara input
-let
-		cipher
-		
-		println("DO SOMETHING ", compute(input_senders_n))
-		md"""
-	What?
-	"""
-end
-
 
 # ╔═╡ 0bf68619-096e-438f-ae6a-4362f6936084
 # Add button that will calculate. Show calculations
@@ -123,7 +100,41 @@ md"""
 
 ###### Enter the message you want to decrypt
 
-$(@bind input_xxxx TextField((55,10)))
+$(@bind input_y TextField((55,10)))
+"""
+
+# ╔═╡ 3acbb96e-7c57-413c-8737-d2c65aadbef3
+md"""
+$(@bind decipher html"<input type=button value='Generate decrypted message'>")
+"""
+#This encrypted message must be less than n
+
+# ╔═╡ df1dcad7-f02c-49c6-ae38-3ee8e75bd706
+mod(56862, 256)
+
+# ╔═╡ 62289d80-e74e-4586-942f-d910b15c9d07
+md"""
+Step 1: Choose p, q
+"""
+
+# ╔═╡ fc74f886-39c3-4f96-be08-0797a06cc277
+md"""
+Step 2: Compute n
+"""
+
+# ╔═╡ d8195945-cfbb-47b4-b493-68d1bce1fb08
+md"""
+Step 3: Compute ϕ
+"""
+
+# ╔═╡ 9709b14c-1efe-4a8a-9ff4-f9204b067080
+md"""
+Step 4: Choose e
+"""
+
+# ╔═╡ e8dbe061-8e49-4b87-adc0-ad6151aad34d
+md"""
+Step 5: Compute d
 """
 
 # ╔═╡ cba96317-b014-4ea1-b98b-33c08ed2da09
@@ -135,6 +146,9 @@ md"
 md"
 ### Code
 "
+
+# ╔═╡ dbffd5d1-cf9b-4400-bb4d-0fe21146f3b2
+
 
 # ╔═╡ 72a51084-e43f-4eeb-96ad-a95fdf9beb51
 md"## Pluto-Notebook
@@ -150,8 +164,221 @@ md"## Pluto-Notebook
 md"#### Task A
 ##### Functions"
 
-# ╔═╡ 0ef643a1-7867-41a2-af08-7d13c1d6e219
+# ╔═╡ 9dffd0c9-f78d-438d-84f2-3f15902f40d1
+"""
+    set_n(p, q)
 
+Returns the product of given arguments p and q
+"""
+set_n = (p, q) -> BigInt(p) * BigInt(q)
+
+# ╔═╡ 7376b099-d71d-4fa3-a896-83cb6ff83193
+"""
+    set_ϕ(p, q)
+
+Returns ϕ(n) = (p-1)(p-q)
+A.k.a Euler totient function
+"""
+set_ϕ = (p, q) -> BigInt(p - 1) * BigInt(q - 1)
+
+# ╔═╡ 5ae27040-706e-4f03-8f1d-ddbaec923e57
+"""
+    set_e(ϕ, uptil=10)
+
+Returns a set of coprimes e to give ϕ. 
+The lenght of the set equals uptil that has a default value of 10
+
+e ∈ {1, 2..., ϕ(n)-1} s.t. gcd(e, ϕ) == 1
+e and ϕ(n) are relatively prime (coprimes)
+
+### Comments and open issues
+* ϕ must not share a factor with e
+* e does not have to be a large int? 
+"""
+function set_e(ϕ, uptil=10)
+    e = Set()
+    for i ∈ 3:ϕ
+        gcd(i, ϕ) == 1 && push!(e, i)
+        length(e) >= uptil && break
+    end
+    return e
+end
+
+# ╔═╡ 5c75a1a7-c248-41a5-9908-a3eed543d94d
+"""
+    set_d(e, ϕ)
+
+Returns private key d, s.t. de ≣ 1 mod (ϕ)
+
+### Comments and open issues
+* Alternative to set_d = (e, ϕ) -> BigInt(powermod(e, -1, BigInt(ϕ)))
+* Will invmod return a BigInt? Are we allowed to use invmod?
+"""
+set_d = (e, ϕ) -> invmod(BigInt(e), BigInt(ϕ))
+
+# ╔═╡ f6c41a7b-ba3f-475f-a736-d37d22eae37c
+"""
+	set_d2(e, ϕ)
+
+Returns private key d using powermod
+"""
+set_d2 = (e, ϕ) -> BigInt(powermod(BigInt(e), -1, BigInt(ϕ)))
+
+# ╔═╡ 471cf9f8-8ecb-4cce-b522-70e97df6f8fe
+"""
+    set_random_primes_p_q(range_low, range_high)
+
+Returns two distinct random primes, p and q within given range
+
+### Comments and open issues
+* It takes time to compute large numbers
+* Should we simply devide it 
+"""
+function set_random_primes_p_q(range_low, range_high)
+    p = BigInt(prime(rand(range_low:range_high)))
+    q = BigInt(prime(rand(range_low:range_high)))
+    
+    (p != q ? (p, q) : set_random_primes_p_q(range_low, range_high)
+    )
+end
+
+# ╔═╡ 12e01839-c852-4c90-922d-b841be4e4cd2
+p, q = set_random_primes_p_q(10,100)
+
+# ╔═╡ af7d4a6a-eb18-496f-99e9-37366d48539a
+n = set_n(p, q)
+
+# ╔═╡ 2fd9bddc-25d9-4ec0-b280-abf6b411b064
+ϕ = set_ϕ(p, q)
+
+# ╔═╡ 77b72a7e-938c-4b9a-a535-ff9e58f2a92c
+begin
+setof_e = set_e(ϕ, 10)
+e = pop!(setof_e)
+end
+
+# ╔═╡ 468e1ba4-d783-4ebf-80ba-16fb42fec055
+println("n: ", n, " e: ", e)
+
+# ╔═╡ 6f43f1f6-f6fc-4945-bd7d-f7a6c0c09e52
+d = set_d(e, ϕ)
+
+# ╔═╡ 42c5168b-871b-4dd6-9efe-420c2a734261
+println("n: ", n, " d: ", d)
+
+# ╔═╡ 4a257727-8f2d-424a-86da-ada6dd0db633
+d2 = set_d2(e, ϕ)
+
+# ╔═╡ df5a8df6-6db3-4d37-859e-00dff0eac42e
+"""
+    encrypt(x, e, n)
+
+Returns powermod(x, e, n) that is mod(x^e, n)
+Which computes ``x^e mod (n)``
+"""
+encrypt = (x, e, n) -> powermod(BigInt(x), BigInt(e), BigInt(n))
+
+# ╔═╡ e8301b1c-c95b-4a04-aede-4efff289b180
+"""
+    decrypt(y, d, n)
+
+Returns powermod(y, d, n) that is mod(y^d, n)
+Which computes ``y^d mod (n)`` where ``d == e^(-1)``
+"""
+decrypt = (y, d, n) -> powermod(BigInt(y), BigInt(d), BigInt(n))
+
+# ╔═╡ 706d2a7f-ce3b-465d-a809-fd4be181d871
+# Testar bara input
+function compute2(input_n, input_d, input_y)
+	n = tryparse(BigInt, "$input_n")
+	d = tryparse(BigInt, "$input_d")
+	y = tryparse(BigInt, "$input_y")
+	typeof(n) == Nothing && return "$input_n ain't a number"
+	typeof(d) == Nothing && return "$input_e ain't a number"
+	typeof(y) == Nothing && return "$input_y ain't a number"
+
+	
+	return decrypt(y, d, n)
+end
+
+# ╔═╡ 77844cde-c285-4c1a-82d3-79b180fe16d5
+#testar bara input
+let
+		decipher
+		
+		println(compute2(input_receivers_n, input_receivers_d, input_y))
+		md"""
+	What?
+	"""
+end
+
+# ╔═╡ e3ae1141-e767-4071-88bb-3d4b687fa11c
+"""
+	to_num(message)
+
+Returns a vector
+"""
+function to_num(message)
+    vector = []
+    for c in message
+        push!(vector, Int(c))
+    end
+    return vector
+end
+
+# ╔═╡ 2ae4fcd1-222f-456b-b30f-869573e302be
+"""
+	to_ascii(vector)
+
+Returns a string
+"""
+function to_ascii(vector)
+    string = ""
+    for n in vector
+        string *= Char(n)
+    end
+    return string
+end
+
+# ╔═╡ b38d6f6b-aafc-4fbe-988b-5af30a056424
+function tobase256(vector)
+	base = 256
+	len = length(vector)
+	r = Vector{BigInt}(1:len)
+	result = BigInt(0)
+	
+	for i in 1:len
+    	r[i] = BigInt(base)^(r[i]-1)
+	end
+	result = dot(vector, r)
+	return result
+end
+
+# ╔═╡ 5616a159-dc0a-466c-9b91-cd98420a3e02
+# Testar bara input
+function compute(input_n, input_e, input_x)
+	vector_x = to_num(input_x)
+	n = tryparse(BigInt, "$input_n")
+	e = tryparse(BigInt, "$input_e")
+	typeof(n) == Nothing && return "$input_n ain't a number"
+	typeof(e) == Nothing && return "$input_e ain't a number"
+
+	x = BigInt(0)
+	x = tobase256(vector_x)
+	
+	return encrypt(x, e, n)
+end
+
+# ╔═╡ 5edcfcf7-c3ea-4d1a-b980-3b12e879407a
+#testar bara input
+let
+		encipher
+		
+		println(compute(input_senders_n, input_senders_e, input_x))
+		md"""
+	What?
+	"""
+end
 
 # ╔═╡ 00000000-0000-0000-0000-000000000001
 PLUTO_PROJECT_TOML_CONTENTS = """
@@ -171,7 +398,7 @@ PLUTO_MANIFEST_TOML_CONTENTS = """
 
 julia_version = "1.8.0"
 manifest_format = "2.0"
-project_hash = "9f3837a0c949a0b52a00f9fd4b5810a971d28c7b"
+project_hash = "77557fa042449fe94e0b599d239bb6fab76c9839"
 
 [[deps.AbstractPlutoDingetjes]]
 deps = ["Pkg"]
@@ -416,19 +643,47 @@ version = "17.4.0+0"
 # ╟─499c3100-edbd-4510-b6f6-13694529e9f1
 # ╟─70ee665c-1c94-4a04-884b-cbad0389e814
 # ╟─e3a3f577-6bdf-489a-9c7c-36ef655c25a0
+# ╠═468e1ba4-d783-4ebf-80ba-16fb42fec055
 # ╟─b1a72120-c2ac-4372-a585-2ae7ad112440
-# ╟─94d0e0b8-1181-4d44-a1e6-18169a0d4e4a
+# ╠═94d0e0b8-1181-4d44-a1e6-18169a0d4e4a
 # ╟─5edcfcf7-c3ea-4d1a-b980-3b12e879407a
-# ╟─5616a159-dc0a-466c-9b91-cd98420a3e02
+# ╠═5616a159-dc0a-466c-9b91-cd98420a3e02
 # ╟─0bf68619-096e-438f-ae6a-4362f6936084
 # ╟─7371513f-3833-48ce-afb9-9ced96355c64
 # ╟─a623010a-b0e2-4b3f-910e-602826317a70
+# ╠═42c5168b-871b-4dd6-9efe-420c2a734261
 # ╟─2f917c1c-fa83-4c67-92a2-2b006d919d8a
+# ╠═3acbb96e-7c57-413c-8737-d2c65aadbef3
+# ╠═77844cde-c285-4c1a-82d3-79b180fe16d5
+# ╠═df1dcad7-f02c-49c6-ae38-3ee8e75bd706
+# ╠═706d2a7f-ce3b-465d-a809-fd4be181d871
+# ╠═62289d80-e74e-4586-942f-d910b15c9d07
+# ╠═12e01839-c852-4c90-922d-b841be4e4cd2
+# ╠═fc74f886-39c3-4f96-be08-0797a06cc277
+# ╠═af7d4a6a-eb18-496f-99e9-37366d48539a
+# ╠═d8195945-cfbb-47b4-b493-68d1bce1fb08
+# ╠═2fd9bddc-25d9-4ec0-b280-abf6b411b064
+# ╠═9709b14c-1efe-4a8a-9ff4-f9204b067080
+# ╠═77b72a7e-938c-4b9a-a535-ff9e58f2a92c
+# ╠═e8dbe061-8e49-4b87-adc0-ad6151aad34d
+# ╠═6f43f1f6-f6fc-4945-bd7d-f7a6c0c09e52
+# ╠═4a257727-8f2d-424a-86da-ada6dd0db633
 # ╟─cba96317-b014-4ea1-b98b-33c08ed2da09
 # ╟─3992d19b-634e-494c-a3d2-6cf118605c08
+# ╠═dbffd5d1-cf9b-4400-bb4d-0fe21146f3b2
 # ╟─72a51084-e43f-4eeb-96ad-a95fdf9beb51
 # ╠═f1900262-9b44-4c62-9fc9-aaff868bb910
 # ╟─e0c3b4fa-2481-4a5b-9e62-aaa121718f2c
-# ╠═0ef643a1-7867-41a2-af08-7d13c1d6e219
+# ╠═9dffd0c9-f78d-438d-84f2-3f15902f40d1
+# ╠═7376b099-d71d-4fa3-a896-83cb6ff83193
+# ╠═5ae27040-706e-4f03-8f1d-ddbaec923e57
+# ╠═5c75a1a7-c248-41a5-9908-a3eed543d94d
+# ╠═f6c41a7b-ba3f-475f-a736-d37d22eae37c
+# ╠═471cf9f8-8ecb-4cce-b522-70e97df6f8fe
+# ╠═df5a8df6-6db3-4d37-859e-00dff0eac42e
+# ╠═e8301b1c-c95b-4a04-aede-4efff289b180
+# ╠═e3ae1141-e767-4071-88bb-3d4b687fa11c
+# ╠═2ae4fcd1-222f-456b-b30f-869573e302be
+# ╠═b38d6f6b-aafc-4fbe-988b-5af30a056424
 # ╟─00000000-0000-0000-0000-000000000001
 # ╟─00000000-0000-0000-0000-000000000002
