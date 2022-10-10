@@ -3,7 +3,7 @@ module MyCrypto
 using Primes
 using LinearAlgebra
 
-export set_n, set_p, set_ϕ, set_e, set_d, set_two_random_primes
+export set_n, set_p, set_ϕ, set_e, set_d, set_random_primes_p_q
 
 # Set n
 set_n = (p, q) -> BigInt(p) * BigInt(q)
@@ -38,11 +38,11 @@ Returns d
 set_d = (e, ϕ) -> invmod(e, ϕ) 
 
 """
-    twoRandomPrimes(range_low, range_high)
+    set_random_primes_p_q(range_low, range_high)
 
-Returns two random large primes, p and q within given range
+Returns two random primes, p and q within given range
 """
-function set_two_random_primes(range_low, range_high)
+function set_random_primes_p_q(range_low, range_high)
     # Set p and q
     p = BigInt(0)
     q = BigInt(0)
