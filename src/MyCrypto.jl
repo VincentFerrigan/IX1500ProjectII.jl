@@ -1,9 +1,29 @@
+# MyCrypto.jl
+"""
+    MyCrypto
+
+Author:
+Date: 2022-10-10
+Notes:
+
+Contains:
+- set_n
+- set_p
+- set_ϕ
+- set_e
+- set_d
+- set_random_primes_p_q
+- decrypt
+- encrypt
+
+"""
 module MyCrypto
 
 using Primes
 using LinearAlgebra
 
-export set_n, set_p, set_ϕ, set_e, set_d, set_random_primes_p_q, isprime
+export set_n, set_p, set_ϕ, set_e, set_d, 
+set_random_primes_p_q, isprime, decrypt, encrypt
 
 """
     set_n(p, q)
@@ -69,5 +89,21 @@ function set_random_primes_p_q(range_low, range_high)
     (p != q ? (p, q) : set_random_primes_p_q(range_low, range_high)
     )
 end
+
+"""
+    encrypt(x, e, n)
+
+Returns powermod(x, e, n) that is mod(x^e, n)
+Which computes ``x^e mod (n)``
+"""
+encrypt = (x, e, n) -> powermod(x, e, n)
+
+"""
+    decrypt(x, d, n)
+
+Returns powermod(y, d, n) that is mod(y^d, n)
+Which computes ``y^d mod (n)`` where ``d == e^(-1)``
+"""
+decrypt = (y, d, n) -> powermod(y, d, n)
 
 end #  module

@@ -38,6 +38,12 @@ end
     @test d == d2
     @test mod(*(d,e), ϕ) == 1               # de ≣ 1 mod (ϕ)
     @test mod(*(d2,e), ϕ) == 1               # de ≣ 1 mod (ϕ)
+    
+    message = 10
+    e_message = encrypt(message, e, n)
+    d_message = decrypt(e_message, d, n)
+
+    @test d_message == message
 end
 
 p, q = set_random_primes_p_q(10^2, 10^4)
